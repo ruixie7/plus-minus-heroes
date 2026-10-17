@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Plus & Minus Heroes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sky-top:#7CC8FF; --sky-bottom:#E3F5FF; --grass:#6CC75C; --grass-dark:#4FA444;
+  --text:#2B2140; --muted:#5D5376; --paper:#FFFFFF; --paper-2:#FFF6D6;
+  --sun:#FFD23F; --coral:#FF5D73; --mint:#2EC4B6; --plum:#7B5CD6; --line:#2B2140;
+  --cell-new:#EEF0F6; --cell-learn:#FFE58A; --cell-got:#8FE3C8;
+  color-scheme: light;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --sky-top:#121838; --sky-bottom:#2B3972; --grass:#2E6B36; --grass-dark:#22522A;
+    --text:#FFF6E0; --muted:#CFC7EA; --paper:#2A2350; --paper-2:#3A3068; --line:#0B0720;
+    --cell-new:#3A3266; --cell-learn:#8A6D12; --cell-got:#1E7D6E; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --sky-top:#121838; --sky-bottom:#2B3972; --grass:#2E6B36; --grass-dark:#22522A;
+  --text:#FFF6E0; --muted:#CFC7EA; --paper:#2A2350; --paper-2:#3A3068; --line:#0B0720;
+  --cell-new:#3A3266; --cell-learn:#8A6D12; --cell-got:#1E7D6E; color-scheme: dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{ height:100%; scroll-padding-top:env(safe-area-inset-top, 0px);
+  background: linear-gradient(var(--sky-top), var(--sky-bottom) 72%, var(--grass) 72%, var(--grass-dark));
+  background-attachment: fixed; }
+body{ margin:0; min-height:100%; color:var(--text); background:transparent;
+  font-family:"Baloo 2", "Arial Rounded MT Bold", "Trebuchet MS", system-ui, sans-serif; font-size:18px; line-height:1.35;
+  -webkit-tap-highlight-color: transparent; }
+button{ font:inherit; color:inherit; touch-action:manipulation; cursor:pointer }
+button:focus-visible{ outline:4px solid var(--plum); outline-offset:3px }
+#app{ max-width:1100px; margin:0 auto; padding:14px 16px 24px }
+
+.btn{ background:var(--paper); color:var(--text); border:3px solid var(--line); border-radius:18px;
+  box-shadow:0 5px 0 var(--line); padding:10px 18px; font-weight:700; font-size:1.1rem;
+  transition: transform .08s, box-shadow .08s; }
+.btn:active:not(:disabled){ transform:translateY(4px); box-shadow:0 1px 0 var(--line) }
+.btn:disabled{ opacity:.4; cursor:not-allowed }
+.btn-go{ background:var(--mint); color:#10302C }
+.btn-sun{ background:var(--sun); color:#2B2140 }
+.link{ background:none; border:none; padding:6px 4px; font-weight:700; color:var(--text); text-decoration:underline; text-underline-offset:4px }
+
+.panel{ background:var(--paper); border:3px solid var(--line); border-radius:26px; padding:16px 18px 18px; box-shadow:0 6px 0 var(--line) }
+.panel h2{ margin:0 0 10px; font-size:1.45rem; font-weight:800; line-height:1.1 }
+.muted{ color:var(--muted) }
+
+/* Home */
+.title{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin:6px 0 4px }
+.title h1{ margin:0; font-size:clamp(2.2rem, 7vw, 3.8rem); font-weight:800; line-height:.95; letter-spacing:-.01em;
+  color:#fff; -webkit-text-stroke:3px #2B2140; paint-order:stroke fill; text-shadow:0 5px 0 #2B2140 }
+.signs{ display:flex; gap:6px }
+.sign{ width:52px; height:52px; border-radius:50%; border:3px solid #2B2140; display:grid; place-items:center;
+  font-size:2.1rem; font-weight:800; color:#fff; box-shadow:0 4px 0 #2B2140; line-height:1 }
+.sign.plus{ background:var(--coral); transform:rotate(-8deg) } .sign.minus{ background:var(--plum); transform:rotate(7deg) }
+.tag{ margin:6px 0 14px; font-size:1.15rem; font-weight:600 }
+.home-grid{ display:grid; gap:16px; grid-template-columns:1fr }
+@media (min-width:820px){ .home-grid{ grid-template-columns: 1fr 1.15fr } }
+.heroes{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px }
+.hero-card{ background:var(--paper-2); border:3px solid var(--line); border-radius:22px; padding:6px 4px 8px; display:flex; flex-direction:column; align-items:center }
+.hero-card[aria-pressed="true"]{ background:var(--sun); color:#2B2140; box-shadow:0 5px 0 var(--line); transform:translateY(-3px) }
+.hero-card .art{ width:100%; max-width:120px; aspect-ratio:1 }
+.hero-card b{ font-size:1.2rem; line-height:1 } .hero-card small{ font-size:.9rem; opacity:.8 }
+.modes{ display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:4px }
+.mode{ border:3px solid var(--line); border-radius:16px; background:var(--paper-2); padding:8px 4px; font-weight:700; display:flex; flex-direction:column; align-items:center; line-height:1.1 }
+.mode span{ font-size:1.8rem; font-weight:800 }
+.mode[aria-pressed="true"]{ background:var(--plum); color:#fff; box-shadow:0 4px 0 var(--line) }
+.levels{ display:grid; gap:12px }
+.level{ display:flex; align-items:center; gap:12px; text-align:left; border:3px solid var(--line); border-radius:22px; padding:8px 14px 8px 8px; box-shadow:0 5px 0 var(--line) }
+.level:active{ transform:translateY(4px); box-shadow:0 1px 0 var(--line) }
+.level .art{ width:86px; height:86px; flex:none }
+.level b{ display:block; font-size:1.5rem; line-height:1 } .level span{ display:block; font-size:1rem }
+.lv-easy{ background:#C9F2B8; color:#2B2140 } .lv-medium{ background:#FFE08A; color:#2B2140 } .lv-hard{ background:#FFB4C0; color:#2B2140 }
+.shelf{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:16px }
+.medals{ display:flex; gap:4px; flex-wrap:wrap; align-items:center }
+.medal{ width:28px; height:28px; border-radius:50%; border:3px solid #2B2140; display:inline-grid; place-items:center; font-size:.8rem; font-weight:800; color:#2B2140 }
+.m-easy{ background:#E8A36B } .m-medium{ background:#DCE3EC } .m-hard{ background:#FFD23F }
+.warn{ background:#FFE3E3; color:#7A1222; border:2px solid #7A1222; border-radius:12px; padding:6px 10px; font-weight:600 }
+
+/* Fight */
+.fight{ display:flex; flex-direction:column; gap:10px; min-height:calc(100dvh - 40px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px)) }
+.hud{ display:grid; grid-template-columns:1fr auto 1fr; align-items:start; gap:8px }
+.hp{ background:var(--paper); border:3px solid var(--line); border-radius:16px; padding:4px 10px 6px }
+.hp b{ font-size:1.05rem; line-height:1.1 }
+.hp.right{ text-align:right }
+.hearts{ display:flex; gap:2px; flex-wrap:wrap } .hp.right .hearts{ justify-content:flex-end }
+.heart{ width:22px; height:20px } .heart path{ stroke:#2B2140; stroke-width:2.4 }
+.heart.full path{ fill:var(--coral) } .heart.empty path{ fill:transparent; stroke:var(--muted) }
+.heart.pop{ animation: pop .5s ease-out }
+@keyframes pop{ 0%{transform:scale(1.6)} 100%{transform:scale(1)} }
+.mid{ display:flex; flex-direction:column; align-items:center; gap:4px }
+.chip{ background:var(--sun); color:#2B2140; border:3px solid var(--line); border-radius:999px; padding:0 12px; font-weight:800 }
+.stage{ display:grid; grid-template-columns:1fr minmax(0,1.5fr) 1fr; align-items:end; gap:8px; flex:1; padding-bottom:4px }
+.actor-box{ display:flex; flex-direction:column; align-items:center }
+.actor-box .art{ width:100%; max-width:200px; aspect-ratio:1 }
+.actor-box figcaption{ font-weight:800; background:var(--paper); border:3px solid var(--line); border-radius:999px; padding:0 12px; margin-top:-6px; z-index:1 }
+.card{ background:var(--paper); border:4px solid var(--line); border-radius:30px; box-shadow:0 8px 0 var(--line);
+  padding:14px 10px 12px; text-align:center; align-self:center; transform:rotate(-1.5deg); transition: background .2s }
+.card.yes{ background:#C8F5E1; color:#14382F } .card.no{ background:#FFE0E5; color:#4A1220 }
+.eq{ font-size:clamp(2.8rem, 10vw, 5.6rem); font-weight:800; line-height:1; white-space:nowrap; letter-spacing:-.01em }
+.op-plus{ color:var(--coral) } .op-minus{ color:var(--plum) }
+.card.yes .op-plus,.card.no .op-plus{ color:#D62F4A } .card.yes .op-minus,.card.no .op-minus{ color:#5B3DC0 }
+.well{ margin:8px auto 0; min-width:3.2em; display:inline-block; font-size:clamp(2.2rem, 8vw, 4rem); font-weight:800; line-height:1.1;
+  border-bottom:5px dashed currentColor; padding:0 10px; min-height:1.15em }
+.well.empty{ opacity:.35 }
+.fb{ min-height:1.5em; margin:6px 0 0; font-weight:700; font-size:1.15rem }
+.pad{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; width:min(420px,100%); margin:0 auto }
+.key{ height:clamp(52px, 9vh, 76px); font-size:1.9rem; font-weight:800; background:var(--paper); color:var(--text);
+  border:3px solid var(--line); border-radius:18px; box-shadow:0 5px 0 var(--line) }
+.key:active:not(:disabled){ transform:translateY(4px); box-shadow:0 1px 0 var(--line) }
+.key:disabled{ opacity:.45 }
+.key.enter{ background:var(--mint); color:#10302C; font-size:1.4rem } .key.back{ background:var(--paper-2) }
+@media (max-width:640px){
+  .heart{ width:17px; height:15px }
+  .stage{ grid-template-columns:1fr 1fr; grid-template-areas:"hero boss" "card card" }
+  .stage .hero-side{ grid-area:hero } .stage .boss-side{ grid-area:boss } .stage .card{ grid-area:card }
+  .actor-box .art{ max-width:140px }
+  .hp b{ font-size:.95rem } .heart{ width:18px; height:16px }
+}
+.layer{ position:fixed; inset:0; background:rgba(20,14,40,.55); display:grid; place-items:center; padding:20px; z-index:20 }
+.dialog{ max-width:380px; text-align:center } .dialog .row{ display:flex; gap:10px; justify-content:center; margin-top:12px; flex-wrap:wrap }
+
+/* End */
+.end{ position:relative; z-index:1; text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px; padding-top:10px }
+.end h1{ margin:0; font-size:clamp(3rem, 12vw, 5.5rem); font-weight:800; line-height:1; color:#fff;
+  -webkit-text-stroke:3px #2B2140; paint-order:stroke fill; text-shadow:0 6px 0 #2B2140 }
+.end h1.lose{ color:var(--sun) }
+.end-stage{ display:flex; justify-content:center; align-items:flex-end; gap:12px; width:100% }
+.end-stage .art{ width:min(42vw, 230px); aspect-ratio:1 }
+.end-actions{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px; width:min(460px,100%); margin-top:8px }
+.end-actions .wide{ grid-column:1 / -1 }
+.confetti{ position:fixed; inset:0; pointer-events:none; overflow:hidden; z-index:0 }
+.confetti i{ position:absolute; top:-20px; width:12px; height:16px; border:2px solid #2B2140; border-radius:3px; animation: fall linear forwards }
+@keyframes fall{ to{ transform: translateY(110vh) rotate(720deg) } }
+
+/* Facts */
+.facts-top{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:12px }
+.facts-top h1{ margin:0; font-size:2rem; font-weight:800 }
+.tabs{ display:flex; gap:8px; margin-bottom:12px }
+.scroll{ overflow-x:auto; padding-bottom:6px }
+.grid{ display:grid; grid-template-columns:repeat(10, minmax(54px,1fr)); gap:5px; min-width:590px }
+.cell{ border:2px solid var(--line); border-radius:10px; padding:3px 2px; text-align:center; line-height:1.05; color:var(--text) }
+.cell b{ display:block; font-size:.95rem } .cell small{ font-size:.75rem; opacity:.75 }
+.c-new{ background:var(--cell-new) } .c-learn{ background:var(--cell-learn) } .c-got{ background:var(--cell-got) }
+.legend{ display:flex; gap:14px; flex-wrap:wrap; margin:12px 0 4px; font-weight:600 }
+.legend span::before{ content:""; display:inline-block; width:16px; height:16px; border:2px solid var(--line); border-radius:5px; vertical-align:-3px; margin-right:6px; background:var(--sw) }
+
+/* Characters */
+.art svg{ width:100%; height:100%; overflow:visible; display:block }
+.actor{ transform-origin:50% 90% }
+.mo-idle{ animation: bob 2.4s ease-in-out infinite }
+.mo-jump{ animation: hop .55s ease-in-out infinite alternate }
+.mo-shake{ animation: shake .35s ease-in-out 3 }
+.mo-fallen{ transform: translateY(16%) rotate(22deg) scale(.95,.85) }
+.mo-lay{ transform: translateY(16%) rotate(-22deg) scale(.95,.85) }
+@keyframes bob{ 50%{ transform: translateY(-4px) } }
+@keyframes hop{ from{ transform: translateY(0) scale(1.03,.97) } to{ transform: translateY(-24%) scale(.97,1.03) } }
+@keyframes shake{ 25%{ transform: translateX(-5px) } 75%{ transform: translateX(5px) } }
+.tear{ animation: drip 1s ease-in infinite }
+.tear.t2{ animation-delay:.5s }
+@keyframes drip{ 0%{ transform:translateY(0); opacity:1 } 100%{ transform:translateY(34px); opacity:0 } }
+.stream{ animation: flow .6s linear infinite }
+@keyframes flow{ 50%{ opacity:.55 } }
+@media (prefers-reduced-motion: reduce){
+  .mo-idle,.mo-jump,.mo-shake,.tear,.stream,.heart.pop{ animation:none }
+  .confetti{ display:none }
+}
+</style>
+</head>
+<body>
+<div id="app" aria-live="polite"></div>
+<script>
+/* ================================================================
+   SETTINGS — change these numbers to tune the game.
+   Difficulty uses steps 0–9 (shown as 0.0–0.9).
+   ================================================================ */
+const CONFIG = {
+  maxStep: 9,
+  answersToShift: 2,      // 2 right in a row at a level → harder, 2 wrong → easier
+  masteredStreak: 3,      // right this many times in a row = “got it”
+  numbers: { min: 1, max: 10 },  // addends; subtraction uses the matching facts (e.g. 13 − 5)
+  levels: {
+    easy:   { label: 'Easy',   start: 0, heroHp: 6, bossHp: 4, boss: 'crab'   },
+    medium: { label: 'Medium', start: 3, heroHp: 5, bossHp: 6, boss: 'bear'   },
+    hard:   { label: 'Hard',   start: 5, heroHp: 4, bossHp: 8, boss: 'dragon' },
+  },
+  streakMove:      { 2: -2, 3: -3 },  // end of battle: right streak lowers difficulty
+  wrongStreakMove: { 2:  2, 3:  3 },  // end of battle: wrong streak raises difficulty
+};
+const LEVELS = ['easy', 'medium', 'hard'];
+
+/* First-time difficulty guess for a + b (step 0–9). */
+function seedAdd(a, b) {
+  const sum = a + b;
+  if (a === 1 || b === 1) return 0;
+  if (a === 2 || b === 2) return 1;
+  if (a === 10 || b === 10) return 2;
+  if (a === b) return sum <= 10 ? 2 : 4;
+  if (sum <= 10) return 3;
+  if (Math.abs(a - b) === 1) return 5;
+  if (a === 9 || b === 9) return 6;
+  if (Math.min(a, b) >= 6) return 8;
+  return 7;
+}
+/* First-time guess for c − b, where c − b = a. A little harder than the matching sum. */
+function seedSub(a, b) {
+  if (b === 1) return 0;
+  if (b === 10) return 2;
+  return Math.min(CONFIG.maxStep, seedAdd(a, b) + 1);
+}
+
+/* ---------- Cast ---------- */
+const INK = '#2B2140';
+const CAST = {
+  frog:   { name: 'Pip',   label: 'the frog',   color: '#7ED957', belly: '#DDF8C8', eyeY: 70,  dx: 28, mouthY: 128 },
+  bunny:  { name: 'Bun',   label: 'the bunny',  color: '#FFB3D1', belly: '#FFE6F0', eyeY: 112, dx: 22, mouthY: 138 },
+  dino:   { name: 'Rex',   label: 'the dino',   color: '#FFA24C', belly: '#FFE2C2', eyeY: 108, dx: 24, mouthY: 134 },
+  crab:   { name: 'Pinch',   label: 'the crab',   color: '#FF6B5B', belly: '#FFC4B8', eyeY: 52,  dx: 20, mouthY: 140 },
+  bear:   { name: 'Grizzle', label: 'the bear',   color: '#B07A4F', belly: '#E9C9A6', eyeY: 106, dx: 24, mouthY: 146 },
+  dragon: { name: 'Blaze',   label: 'the dragon', color: '#8E6CEF', belly: '#FFE07A', eyeY: 104, dx: 24, mouthY: 136 },
+};
+const HEROES = ['frog', 'bunny', 'dino'];
+
+function eye(expr, x, y, side) {
+  const ln = `fill="none" stroke="${INK}" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"`;
+  if (expr === 'calm' || (expr === 'tongue' && side === 'L'))
+    return `<ellipse cx="${x}" cy="${y}" rx="7" ry="9" fill="${INK}"/><circle cx="${x + 2.5}" cy="${y - 3.5}" r="2.6" fill="#fff"/>`;
+  if (expr === 'laugh') return `<path d="M${x - 8} ${y + 3} Q${x} ${y - 9} ${x + 8} ${y + 3}" ${ln}/>`;
+  if (expr === 'tongue') return `<path d="M${x + 7} ${y - 7} L${x - 6} ${y} L${x + 7} ${y + 7}" ${ln}/>`;
+  if (expr === 'cry') {
+    const brow = side === 'L' ? `M${x - 10} ${y - 12} L${x + 6} ${y - 19}` : `M${x + 10} ${y - 12} L${x - 6} ${y - 19}`;
+    return `<path d="M${x - 8} ${y - 1} Q${x} ${y + 7} ${x + 8} ${y - 1}" ${ln}/><path d="${brow}" ${ln}/>
+      <path class="tear" d="M${x} ${y + 8} q-6 10 0 13 q6 -3 0 -13z" fill="#5EC8FF" stroke="${INK}" stroke-width="1.5"/>
+      <path class="tear t2" d="M${x} ${y + 8} q-6 10 0 13 q6 -3 0 -13z" fill="#5EC8FF" stroke="${INK}" stroke-width="1.5"/>`;
+  }
+  if (expr === 'hard') {
+    const d = side === 'L' ? `M${x - 8} ${y - 8} L${x + 6} ${y} L${x - 8} ${y + 8}` : `M${x + 8} ${y - 8} L${x - 6} ${y} L${x + 8} ${y + 8}`;
+    return `<path d="${d}" ${ln}/><rect class="stream" x="${x - 5}" y="${y + 9}" width="10" height="70" rx="5" fill="#5EC8FF" opacity=".9"/>
+      <path class="tear" d="M${side === 'L' ? x - 16 : x + 16} ${y} q-6 10 0 13 q6 -3 0 -13z" fill="#5EC8FF"/>`;
+  }
+  return '';
+}
+function mouth(expr, my) {
+  const ln = `fill="none" stroke="${INK}" stroke-width="4.5" stroke-linecap="round"`;
+  switch (expr) {
+    case 'laugh': return `<path d="M84 ${my - 2} Q100 ${my + 30} 116 ${my - 2} Z" fill="${INK}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/><ellipse cx="100" cy="${my + 10}" rx="7" ry="4" fill="#FF6F8A"/>`;
+    case 'tongue': return `<path d="M91 ${my + 1} Q91 ${my + 22} 100 ${my + 22} Q109 ${my + 22} 109 ${my + 1} Z" fill="#FF6F8A" stroke="${INK}" stroke-width="3"/><line x1="100" y1="${my + 4}" x2="100" y2="${my + 14}" stroke="${INK}" stroke-width="2"/><path d="M84 ${my} Q100 ${my + 4} 116 ${my}" ${ln}/>`;
+    case 'cry': return `<path d="M88 ${my + 6} Q100 ${my - 6} 112 ${my + 6}" ${ln}/>`;
+    case 'hard': return `<ellipse cx="100" cy="${my + 8}" rx="14" ry="17" fill="${INK}"/><ellipse cx="100" cy="${my + 18}" rx="8" ry="5" fill="#FF6F8A"/>`;
+    default: return `<path d="M88 ${my} Q100 ${my + 11} 112 ${my}" ${ln}/>`;
+  }
+}
+function charSVG(id, expr) {
+  const c = CAST[id];
+  const S = `stroke="${INK}" stroke-width="4" stroke-linejoin="round"`;
+  let back = '', front = '', body = '';
+  let bx = 62, by = 58, bcy = 128;
+  if (id === 'frog') {
+    back = `<circle cx="72" cy="72" r="25" fill="${c.color}" ${S}/><circle cx="128" cy="72" r="25" fill="${c.color}" ${S}/>`;
+    front = `<ellipse cx="52" cy="122" rx="9" ry="6" fill="#FF9DB4" opacity=".8"/><ellipse cx="148" cy="122" rx="9" ry="6" fill="#FF9DB4" opacity=".8"/>`;
+    // eye whites in bumps drawn after body
+    front = `<circle cx="72" cy="70" r="15" fill="#fff" ${S}/><circle cx="128" cy="70" r="15" fill="#fff" ${S}/>` + front;
+  }
+  if (id === 'bunny') {
+    back = `<g transform="rotate(-8 78 70)"><ellipse cx="78" cy="42" rx="16" ry="44" fill="${c.color}" ${S}/><ellipse cx="78" cy="44" rx="7" ry="30" fill="#FF8FB8"/></g>
+            <g transform="rotate(8 122 70)"><ellipse cx="122" cy="42" rx="16" ry="44" fill="${c.color}" ${S}/><ellipse cx="122" cy="44" rx="7" ry="30" fill="#FF8FB8"/></g>`;
+    front = `<path d="M95 126 L105 126 L100 132 Z" fill="#FF6F8A" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>
+             <ellipse cx="66" cy="128" rx="8" ry="5" fill="#FF8FB8" opacity=".7"/><ellipse cx="134" cy="128" rx="8" ry="5" fill="#FF8FB8" opacity=".7"/>`;
+  }
+  if (id === 'dino') {
+    back = `<path d="M150 150 Q195 150 196 118 Q180 140 150 128 Z" fill="${c.color}" ${S}/>
+            <path d="M58 92 L66 58 L80 80 L92 50 L104 76 L118 52 L126 80 L140 62 L142 94 Z" fill="#2EC4B6" ${S}/>`;
+    front = `<ellipse cx="66" cy="124" rx="8" ry="5" fill="#FF6F8A" opacity=".6"/><ellipse cx="134" cy="124" rx="8" ry="5" fill="#FF6F8A" opacity=".6"/>`;
+  }
+  if (id === 'crab') {
+    bx = 72; by = 50; bcy = 136;
+    back = `<line x1="84" y1="94" x2="80" y2="58" ${S} stroke-width="5"/><line x1="116" y1="94" x2="120" y2="58" ${S} stroke-width="5"/>
+            <path d="M40 132 L18 104" ${S} stroke-width="6"/><path d="M160 132 L182 104" ${S} stroke-width="6"/>
+            <path d="M44 162 L30 180 M60 172 L52 190 M156 162 L170 180 M140 172 L148 190" ${S} stroke-width="5" fill="none"/>`;
+    front = `<circle cx="80" cy="52" r="14" fill="#fff" ${S}/><circle cx="120" cy="52" r="14" fill="#fff" ${S}/>
+             <path d="M18 104 m-20 -6 a22 22 0 1 0 30 -16 l-6 14 z" fill="${c.color}" ${S}/>
+             <path d="M182 104 m20 -6 a22 22 0 1 1 -30 -16 l6 14 z" fill="${c.color}" ${S}/>`;
+  }
+  if (id === 'bear') {
+    back = `<circle cx="52" cy="78" r="22" fill="${c.color}" ${S}/><circle cx="52" cy="78" r="11" fill="${c.belly}"/>
+            <circle cx="148" cy="78" r="22" fill="${c.color}" ${S}/><circle cx="148" cy="78" r="11" fill="${c.belly}"/>`;
+    bx = 68; by = 64; bcy = 130;
+    front = `<path d="M70 98 L84 92 M130 98 L116 92" stroke="${INK}" stroke-width="5" stroke-linecap="round"/>
+             <ellipse cx="100" cy="140" rx="30" ry="22" fill="${c.belly}" ${S}/><ellipse cx="100" cy="128" rx="10" ry="7" fill="${INK}"/>`;
+  }
+  if (id === 'dragon') {
+    back = `<path d="M50 112 L6 70 L22 104 L2 110 L26 126 L14 142 L48 138 Z" fill="#B79CFF" ${S}/>
+            <path d="M150 112 L194 70 L178 104 L198 110 L174 126 L186 142 L152 138 Z" fill="#B79CFF" ${S}/>
+            <path d="M70 76 L60 36 L88 68 Z" fill="#FFD23F" ${S}/><path d="M130 76 L140 36 L112 68 Z" fill="#FFD23F" ${S}/>`;
+    front = `<path d="M70 92 L86 88 M130 92 L114 88" stroke="${INK}" stroke-width="5" stroke-linecap="round"/>
+             <circle cx="90" cy="122" r="3" fill="${INK}"/><circle cx="110" cy="122" r="3" fill="${INK}"/>`;
+  }
+  body = `<ellipse cx="72" cy="${bcy + by - 8}" rx="18" ry="10" fill="${c.color}" ${S}/><ellipse cx="128" cy="${bcy + by - 8}" rx="18" ry="10" fill="${c.color}" ${S}/>
+          <ellipse cx="100" cy="${bcy}" rx="${bx}" ry="${by}" fill="${c.color}" ${S}/>
+          <ellipse cx="100" cy="${bcy + 18}" rx="${bx * 0.6}" ry="${by * 0.55}" fill="${c.belly}"/>`;
+  const face = eye(expr, 100 - c.dx, c.eyeY, 'L') + eye(expr, 100 + c.dx, c.eyeY, 'R') + mouth(expr, c.mouthY);
+  return `<svg viewBox="0 0 200 200" aria-hidden="true">${back}${body}${front}${face}</svg>`;
+}
+function art(id, expr, motion = 'idle') {
+  return `<div class="art"><div class="actor mo-${motion}">${charSVG(id, expr)}</div></div>`;
+}
+
+/* ---------- Sound ---------- */
+let actx = null;
+function audio() {
+  try {
+    const C = window.AudioContext || window.webkitAudioContext; if (!C) return null;
+    if (!actx) actx = new C(); if (actx.state === 'suspended') actx.resume(); return actx;
+  } catch (e) { return null; }
+}
+function tone(f, t, d, type, peak) {
+  const c = audio(); if (!c) return;
+  const o = c.createOscillator(), g = c.createGain(), s = c.currentTime + t;
+  o.type = type; o.frequency.setValueAtTime(f, s);
+  g.gain.setValueAtTime(0.0001, s); g.gain.exponentialRampToValueAtTime(peak, s + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, s + d);
+  o.connect(g); g.connect(c.destination); o.start(s); o.stop(s + d + 0.02);
+}
+const sfx = {
+  click: () => tone(880, 0, .05, 'square', .04),
+  yes: () => { tone(523, 0, .12, 'triangle', .08); tone(659, .09, .12, 'triangle', .08); tone(784, .18, .22, 'triangle', .09); },
+  no: () => { tone(220, 0, .16, 'sine', .05); tone(175, .11, .24, 'sine', .045); },
+  win: () => [523, 659, 784, 1047].forEach((f, i) => tone(f, i * .12, .25, 'triangle', .09)),
+};
+
+/* ---------- Facts & storage ---------- */
+const STORE = 'plus-minus-heroes-v1';
+const key = f => `${f.a}${f.op}${f.b}`;
+const answerOf = f => f.op === '+' ? f.a + f.b : f.a - f.b;
+function newFact(op, a, b, d) {
+  return { op, a, b, d, streak: 0, wrongStreak: 0, status: 'new', right: 0, wrong: 0, moved: 0, raised: 0 };
+}
+function seedFacts() {
+  const out = [], { min, max } = CONFIG.numbers;
+  for (let a = min; a <= max; a++) for (let b = min; b <= max; b++) out.push(newFact('+', a, b, seedAdd(a, b)));
+  for (let a = min; a <= max; a++) for (let b = min; b <= max; b++) out.push(newFact('-', a + b, b, seedSub(a, b)));
+  return out;
+}
+function todayKey(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+let saveWarn = false;
+function load() {
+  const fresh = { facts: seedFacts(), hero: 'frog', mode: 'mix', wins: {} };
+  try {
+    const raw = localStorage.getItem(STORE);
+    if (!raw) return fresh;
+    const s = JSON.parse(raw);
+    const saved = new Map((s.facts || []).map(f => [key(f), f]));
+    fresh.facts = fresh.facts.map(f => saved.has(key(f)) ? { ...f, ...saved.get(key(f)) } : f);
+    if (CAST[s.hero]) fresh.hero = s.hero;
+    if (['add', 'sub', 'mix'].includes(s.mode)) fresh.mode = s.mode;
+    if (s.wins && typeof s.wins === 'object') fresh.wins = s.wins;
+  } catch (e) {}
+  return fresh;
+}
+function save() {
+  try { localStorage.setItem(STORE, JSON.stringify(G)); saveWarn = false; } catch (e) { saveWarn = true; }
+}
+let G = load();
+
+/* ---------- Question search (same rules as Multiply Heroes) ---------- */
+function poolFor(mode) { return G.facts.filter(f => mode === 'mix' || (mode === 'add' ? f.op === '+' : f.op === '-')); }
+function counts(pool) { const c = Array(CONFIG.maxStep + 1).fill(0); pool.forEach(f => c[f.d]++); return c; }
+function nearest(d, c) {
+  if (c[d]) return d;
+  for (let k = 1; k <= CONFIG.maxStep; k++) { if (c[d - k]) return d - k; if (c[d + k]) return d + k; }
+  return d;
+}
+function scanUp(d, c) { for (let s = d + 1; s <= CONFIG.maxStep; s++) if (c[s]) return s; return d; }
+function scanDown(d, c) { for (let s = d - 1; s >= 0; s--) if (c[s]) return s; return d; }
+function stepSearch(st, correct, c) {
+  if (!c[st.d]) return { d: nearest(st.d, c), r: 0, w: 0 };
+  const r = st.r + (correct ? 1 : 0), w = st.w + (correct ? 0 : 1);
+  if (r >= CONFIG.answersToShift) return { d: scanUp(st.d, c), r: 0, w: 0 };
+  if (w >= CONFIG.answersToShift) return { d: scanDown(st.d, c), r: 0, w: 0 };
+  return { d: st.d, r, w };
+}
+function pick(pool, d, avoid) {
+  const at = pool.filter(f => f.d === d);
+  const choices = at.length > 1 ? at.filter(f => key(f) !== avoid) : at;
+  return choices[Math.floor(Math.random() * choices.length)];
+}
+function recordAnswer(f, correct) {
+  if (correct) {
+    f.streak++; f.wrongStreak = 0; f.right++; f.raised = 0;
+    f.status = f.streak >= CONFIG.masteredStreak ? 'got' : 'learn';
+  } else {
+    f.streak = 0; f.wrongStreak++; f.wrong++; f.moved = 0; f.status = 'learn';
+  }
+}
+const clampStep = d => Math.max(0, Math.min(CONFIG.maxStep, d));
+function endOfBattle(f) {
+  if (f.wrongStreak > 0) {
+    if (f.wrongStreak >= 3 && f.raised < 3) { f.d = clampStep(f.d + CONFIG.wrongStreakMove[3]); f.raised = 3; }
+    else if (f.wrongStreak === 2 && f.raised < 2) { f.d = clampStep(f.d + CONFIG.wrongStreakMove[2]); f.raised = 2; }
+  } else {
+    if (f.streak >= 3 && f.moved < 3) { f.d = clampStep(f.d + CONFIG.streakMove[3]); f.moved = 3; }
+    else if (f.streak === 2 && f.moved < 2) { f.d = clampStep(f.d + CONFIG.streakMove[2]); f.moved = 2; }
+  }
+}
+
+/* ---------- Screens ---------- */
+const app = document.getElementById('app');
+let screen = 'home', F = null, timers = [], factTab = '+';
+const later = (ms, fn) => timers.push(setTimeout(fn, ms));
+const clearTimers = () => { timers.forEach(clearTimeout); timers = []; };
+const opSign = op => op === '+' ? '+' : '−';
+const heart = (full, pop) => `<svg class="heart ${full ? 'full' : 'empty'} ${pop ? 'pop' : ''}" viewBox="0 0 24 22" aria-hidden="true"><path d="M12 20 L3.5 11.5 A5 5 0 0 1 12 4.5 A5 5 0 0 1 20.5 11.5 Z"/></svg>`;
+const MODES = { add: ['+', 'Adding'], sub: ['−', 'Taking away'], mix: ['±', 'Both'] };
+
+function go(name) { clearTimers(); screen = name; render(); window.scrollTo(0, 0); }
+
+function renderHome() {
+  const today = G.wins[todayKey()] || {};
+  const medals = LEVELS.flatMap(l => Array(today[l] || 0).fill(l));
+  const total = Object.values(G.wins).reduce((n, d) => n + (d.easy || 0) + (d.medium || 0) + (d.hard || 0), 0);
+  app.innerHTML = `
+  <header>
+    <div class="title"><h1>Plus &amp; Minus Heroes</h1><div class="signs" aria-hidden="true"><span class="sign plus">+</span><span class="sign minus">−</span></div></div>
+    <p class="tag">Answer the sums. Knock out the boss. No timer, ever.</p>
+  </header>
+  ${saveWarn ? '<p class="warn">This browser couldn’t save your progress.</p>' : ''}
+  <div class="home-grid">
+    <div style="display:grid;gap:16px;align-content:start">
+      <section class="panel"><h2>Pick your hero</h2>
+        <div class="heroes">${HEROES.map(id => `
+          <button class="hero-card" data-hero="${id}" aria-pressed="${G.hero === id}">
+            ${art(id, G.hero === id ? 'laugh' : 'calm', G.hero === id ? 'idle' : 'none')}
+            <b>${CAST[id].name}</b><small>${CAST[id].label}</small>
+          </button>`).join('')}</div>
+      </section>
+      <section class="panel"><h2>Pick your math</h2>
+        <div class="modes">${Object.entries(MODES).map(([m, [s, l]]) => `
+          <button class="mode" data-mode="${m}" aria-pressed="${G.mode === m}"><span>${s}</span>${l}</button>`).join('')}</div>
+      </section>
+    </div>
+    <section class="panel"><h2>Pick a battle</h2>
+      <div class="levels">${LEVELS.map(l => { const L = CONFIG.levels[l], b = CAST[L.boss]; return `
+        <button class="level lv-${l}" data-level="${l}">
+          ${art(L.boss, 'calm', 'none')}
+          <span><b>${L.label}</b><span>${b.name} ${b.label}</span>
+          <span>Your hearts ${L.heroHp} · ${b.name}’s hearts ${L.bossHp}</span></span>
+        </button>`; }).join('')}</div>
+      <div class="shelf">
+        <b>Wins today:</b>
+        <span class="medals">${medals.length ? medals.map(l => `<span class="medal m-${l}" title="${CONFIG.levels[l].label}">★</span>`).join('') : '<span class="muted">none yet</span>'}</span>
+        <span class="muted">· All-time: ${total}</span>
+      </div>
+      <div style="margin-top:10px"><button class="link" data-go="facts">See my facts</button></div>
+    </section>
+  </div>`;
+}
+
+function startFight(level) {
+  const L = CONFIG.levels[level], pool = poolFor(G.mode);
+  const st = { d: nearest(L.start, counts(pool)), r: 0, w: 0 };
+  F = { level, mode: G.mode, hero: L.heroHp, boss: L.bossHp, maxHero: L.heroHp, maxBoss: L.bossHp,
+        search: st, q: pick(pool, st.d, null), input: '', phase: 'ask', fb: null, leaving: false, hit: null };
+  go('fight');
+}
+function renderFight() {
+  const L = CONFIG.levels[F.level], h = CAST[G.hero], b = CAST[L.boss];
+  const q = F.fb ? F.fb.f : F.q;
+  let heroExpr = 'calm', bossExpr = 'calm', heroMo = 'idle', bossMo = 'idle';
+  if (F.phase === 'react') {
+    if (F.fb.correct) { heroExpr = 'tongue'; bossExpr = 'cry'; bossMo = 'shake'; }
+    else { heroExpr = 'cry'; bossExpr = 'laugh'; heroMo = 'shake'; }
+  }
+  const hearts = (n, max, who) => Array.from({ length: max }, (_, i) => heart(i < n, F.hit === who && i === n)).join('');
+  const eq = F.fb ? `${q.a} ${opSign(q.op)} ${q.b} = ${F.fb.ans}` : '';
+  const fbText = !F.fb ? '' : F.fb.correct ? `${F.fb.cheer} ${eq}` : `Almost! ${eq}`;
+  app.innerHTML = `
+  <div class="fight">
+    <div class="hud">
+      <div class="hp"><b>${h.name}</b><div class="hearts" aria-label="${h.name} has ${F.hero} hearts">${hearts(F.hero, F.maxHero, 'hero')}</div></div>
+      <div class="mid"><span class="chip">${L.label}</span>${F.phase === 'ask' ? '<button class="link" data-act="stop">Stop</button>' : ''}</div>
+      <div class="hp right"><b>${b.name}</b><div class="hearts" aria-label="${b.name} has ${F.boss} hearts">${hearts(F.boss, F.maxBoss, 'boss')}</div></div>
+    </div>
+    <div class="stage">
+      <figure class="actor-box hero-side" style="margin:0">${art(G.hero, heroExpr, heroMo)}<figcaption>${h.name}</figcaption></figure>
+      <div class="card ${F.fb ? (F.fb.correct ? 'yes' : 'no') : ''}">
+        <div class="eq" aria-label="${q.a} ${q.op === '+' ? 'plus' : 'minus'} ${q.b}">${q.a} <span class="${q.op === '+' ? 'op-plus' : 'op-minus'}">${opSign(q.op)}</span> ${q.b}</div>
+        ${F.phase === 'ask'
+          ? `<div class="well ${F.input ? '' : 'empty'}" id="well">${F.input || '?'}</div>`
+          : `<div class="well">= ${F.fb.ans}</div>`}
+        <p class="fb" role="status">${fbText}</p>
+      </div>
+      <figure class="actor-box boss-side" style="margin:0">${art(L.boss, bossExpr, bossMo)}<figcaption>${b.name}</figcaption></figure>
+    </div>
+    <div class="pad" aria-label="Number pad">
+      ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button class="key" data-key="${n}" ${F.phase !== 'ask' ? 'disabled' : ''}>${n}</button>`).join('')}
+      <button class="key back" data-key="back" aria-label="Delete" ${F.phase !== 'ask' ? 'disabled' : ''}>⌫</button>
+      <button class="key" data-key="0" ${F.phase !== 'ask' ? 'disabled' : ''}>0</button>
+      <button class="key enter" data-key="enter" ${F.phase !== 'ask' || !F.input ? 'disabled' : ''}>Go!</button>
+    </div>
+  </div>
+  ${F.leaving ? `<div class="layer" role="dialog" aria-modal="true" aria-labelledby="lt"><div class="panel dialog">
+      <h2 id="lt">Leave this battle?</h2><p>Your answers are saved. Leaving early won’t change how hard the facts are.</p>
+      <div class="row"><button class="btn btn-go" data-act="stay">Keep playing</button><button class="btn" data-act="leave">Leave</button></div>
+    </div></div>` : ''}`;
+  F.hit = null;
+}
+function typeKey(k) {
+  if (!F || F.phase !== 'ask' || F.leaving) return;
+  if (k === 'back') F.input = F.input.slice(0, -1);
+  else if (k === 'enter') return submit();
+  else if (F.input.length < 2) F.input = (F.input === '0' ? '' : F.input) + k;
+  const w = document.getElementById('well');
+  if (w) { w.textContent = F.input || '?'; w.classList.toggle('empty', !F.input); }
+  const e = app.querySelector('[data-key="enter"]'); if (e) e.disabled = !F.input;
+}
+function submit() {
+  if (!F.input) return;
+  const f = F.q, ans = answerOf(f), correct = Number(F.input) === ans;
+  recordAnswer(f, correct);
+  F.search = stepSearch(F.search, correct, counts(poolFor(F.mode)));
+  if (correct) { F.boss--; F.hit = 'boss'; sfx.yes(); } else { F.hero--; F.hit = 'hero'; sfx.no(); }
+  const over = F.hero <= 0 || F.boss <= 0;
+  if (over) {
+    G.facts.forEach(endOfBattle);
+    F.outcome = F.boss <= 0 ? 'win' : 'lose';
+    if (F.outcome === 'win') {
+      const t = todayKey(); G.wins[t] = G.wins[t] || { easy: 0, medium: 0, hard: 0 }; G.wins[t][F.level]++;
+    }
+  }
+  save();
+  F.fb = { f, ans, correct, cheer: ['Yes!', 'Boom!', 'Nailed it!', 'Super!'][Math.floor(Math.random() * 4)] };
+  F.phase = 'react'; F.input = '';
+  render();
+  later(correct ? 1300 : 2300, () => {
+    if (over) return go('end');
+    F.q = pick(poolFor(F.mode), F.search.d, key(f));
+    F.fb = null; F.phase = 'ask'; render();
+  });
+}
+
+function renderEnd() {
+  const L = CONFIG.levels[F.level], h = CAST[G.hero], b = CAST[L.boss], won = F.outcome === 'win';
+  const i = LEVELS.indexOf(F.level);
+  app.innerHTML = `
+  ${won ? `<div class="confetti" aria-hidden="true">${Array.from({ length: 40 }, () => `<i style="left:${Math.random() * 100}%;background:${['#FF5D73', '#FFD23F', '#2EC4B6', '#7B5CD6', '#7ED957'][Math.floor(Math.random() * 5)]};animation-duration:${2 + Math.random() * 2.5}s;animation-delay:${Math.random() * 1.2}s"></i>`).join('')}</div>` : ''}
+  <div class="end">
+    <h1 class="${won ? '' : 'lose'}">${won ? 'You win!' : 'So close!'}</h1>
+    <p style="margin:0;font-size:1.25rem;font-weight:700">${won ? `${b.name} ${b.label} is crying buckets.` : `${h.name} will get ${b.name} next time.`}</p>
+    <div class="end-stage">
+      ${art(G.hero, won ? 'laugh' : 'cry', won ? 'jump' : 'lay')}
+      ${art(L.boss, won ? 'hard' : 'laugh', won ? 'fallen' : 'jump')}
+    </div>
+    <div class="end-actions">
+      <button class="btn btn-go wide" data-act="again">Play again</button>
+      <button class="btn" data-act="easier" ${i === 0 ? 'disabled' : ''}>Easier battle</button>
+      <button class="btn btn-sun" data-act="harder" ${i === LEVELS.length - 1 ? 'disabled' : ''}>Harder battle</button>
+      <button class="btn wide" data-go="home">Home</button>
+    </div>
+  </div>`;
+  if (won) sfx.win();
+}
+
+function renderFacts() {
+  const list = G.facts.filter(f => f.op === factTab);
+  const got = list.filter(f => f.status === 'got').length;
+  app.innerHTML = `
+  <div class="facts-top"><h1>My facts</h1><button class="btn" data-go="home">Back</button></div>
+  <section class="panel">
+    <div class="tabs">
+      <button class="mode" style="flex:1" data-tab="+" aria-pressed="${factTab === '+'}"><span>+</span>Adding</button>
+      <button class="mode" style="flex:1" data-tab="-" aria-pressed="${factTab === '-'}"><span>−</span>Taking away</button>
+    </div>
+    <p style="margin:0 0 10px;font-weight:600">You’ve got ${got} of ${list.length}. The small number is how hard each one is (0.0 easiest, 0.9 hardest).</p>
+    <div class="scroll"><div class="grid">${list.map(f => `
+      <div class="cell c-${f.status}" title="Right ${f.right} · Wrong ${f.wrong}"><b>${f.a}${opSign(f.op)}${f.b}</b><small>${(f.d / 10).toFixed(1)}</small></div>`).join('')}
+    </div></div>
+    <div class="legend"><span style="--sw:var(--cell-new)">Not tried yet</span><span style="--sw:var(--cell-learn)">Practicing</span><span style="--sw:var(--cell-got)">Got it (3 in a row)</span></div>
+  </section>
+  <p style="margin-top:18px"><button class="link" data-act="reset">Start over with fresh facts</button></p>`;
+}
+
+function render() {
+  if (screen === 'home') renderHome();
+  else if (screen === 'fight') renderFight();
+  else if (screen === 'end') renderEnd();
+  else renderFacts();
+}
+
+app.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t || t.disabled) return;
+  const d = t.dataset;
+  if (d.key) { sfx.click(); return typeKey(d.key); }
+  sfx.click();
+  if (d.hero) { G.hero = d.hero; save(); return render(); }
+  if (d.mode) { G.mode = d.mode; save(); return render(); }
+  if (d.tab) { factTab = d.tab; return render(); }
+  if (d.level) return startFight(d.level);
+  if (d.go) return go(d.go);
+  const i = F ? LEVELS.indexOf(F.level) : 0;
+  switch (d.act) {
+    case 'stop': F.leaving = true; return render();
+    case 'stay': F.leaving = false; return render();
+    case 'leave': return go('home');
+    case 'again': return startFight(F.level);
+    case 'easier': return startFight(LEVELS[Math.max(0, i - 1)]);
+    case 'harder': return startFight(LEVELS[Math.min(LEVELS.length - 1, i + 1)]);
+    case 'reset':
+      if (confirm('Erase all progress and wins on this device?')) { G = { facts: seedFacts(), hero: G.hero, mode: G.mode, wins: {} }; save(); render(); }
+  }
+});
+window.addEventListener('keydown', e => {
+  if (screen !== 'fight' || e.repeat) return;
+  if (e.key >= '0' && e.key <= '9') { e.preventDefault(); typeKey(e.key); }
+  else if (e.key === 'Backspace') { e.preventDefault(); typeKey('back'); }
+  else if (e.key === 'Enter') { e.preventDefault(); typeKey('enter'); }
+});
+render();
+</script>
+</body>
+</html>
